@@ -1,0 +1,209 @@
+@startuml
+' ==========================================================
+'   ER-ДИАГРАММА ФИЗИЧЕСКОЙ СХЕМЫ БД (в стиле IDEF1X)
+' ==========================================================
+' Цвета по СУБД:
+' PostgreSQL   #A9D0F5 (голубой)
+' Cassandra    #D0A9F5 (фиолетовый)
+' Redis        #F5A9A9 (розовый)
+' Ceph/S3      #A9F5A9 (зелёный)
+' ClickHouse   #F3F781 (жёлтый)
+' ==========================================================
+
+!theme plain
+
+hide circle
+hide methods
+hide stereotypes
+
+' ----------------------------------------------------------
+' PostgreSQL
+' ----------------------------------------------------------
+entity "users" as users <<PostgreSQL>> #A9D0F5 {
+  *id : BIGINT
+  --
+  name : TEXT
+  email : TEXT
+  birth_date : TIMESTAMPTZ
+  created_at : TIMESTAMPTZ
+  last_login : TIMESTAMPTZ
+  avatar_id : BIGINT
+}
+
+entity "groups" as groups <<PostgreSQL>> #A9D0F5 {
+  *id : BIGINT
+  --
+  name : TEXT
+  description : TEXT
+  owner_id : BIGINT
+  created_at : TIMESTAMPTZ
+}
+
+entity "chats" as chats <<PostgreSQL>> #A9D0F5 {
+  *id : BIGINT
+  --
+  type : ENUM("PERSONAL","CHANNEL")
+  participants : TEXT[]
+  created_at : TIMESTAMPTZ
+  updated_at : TIMESTAMPTZ
+}
+
+entity "storage" as storage <<PostgreSQL>> #A9D0F5 {
+  *id : BIGINT
+  --
+  location : TEXT
+  checksum : TEXT
+  replicas : TEXT[]
+}
+
+' ----------------------------------------------------------
+' Cassandra / ScyllaDB
+' ----------------------------------------------------------
+entity "friends" as friends <<Cassandra>> #D0A9F5 {
+  *user_id : BIGINT
+  *friend_id : BIGINT
+  --
+  status : TEXT
+  created_at : TIMESTAMPTZ
+}
+
+entity "group_members" as group_members <<Cassandra>> #D0A9F5 {
+  *group_id : BIGINT
+  *user_id : BIGINT
+  --
+  role : ENUM("SUBSCRIBER","AUTHOR")
+  joined_at : TIMESTAMPTZ
+}
+
+entity "posts" as posts <<Cassandra>> #D0A9F5 {
+  *id : BIGINT
+  --
+  author_id : BIGINT
+  group_id : BIGINT
+  text : TEXT
+  media_id : TEXT[]
+  created_at : TIMESTAMPTZ
+}
+
+entity "comments" as comments <<Cassandra>> #D0A9F5 {
+  *id : BIGINT
+  --
+  post_id : BIGINT
+  author_id : BIGINT
+  text : TEXT
+  created_at : TIMESTAMPTZ
+}
+
+entity "messages" as messages <<Cassandra>> #D0A9F5 {
+  *id : BIGINT
+  --
+  chat_id : BIGINT
+  sender_id : BIGINT
+  text : TEXT
+  created_at : TIMESTAMPTZ
+  media_id : TEXT[]
+}
+
+' ----------------------------------------------------------
+' Redis
+' ----------------------------------------------------------
+entity "sessions" as sessions <<Redis>> #F5A9A9 {
+  *session_id : BIGINT
+  --
+  user_id : BIGINT
+  device : TEXT
+  ip : TEXT
+  expires_at : TIMESTAMPTZ
+}
+
+entity "cache_user_profiles" as cache_user_profiles <<Redis>> #F5A9A9 {
+  *user_id : BIGINT
+  --
+  serialized_profile : TEXT
+  updated_at : TIMESTAMPTZ
+}
+
+entity "cache_feeds" as cache_feeds <<Redis>> #F5A9A9 {
+  *user_id : BIGINT
+  --
+  feed_json : TEXT
+  updated_at : TIMESTAMPTZ
+}
+
+' ----------------------------------------------------------
+' Ceph / S3
+' ----------------------------------------------------------
+entity "media" as media <<Ceph/S3>> #A9F5A9 {
+  *id : BIGINT
+  --
+  owner_id : BIGINT
+  type : ENUM("PHOTO","VIDEO")
+  url : TEXT
+  size : TEXT
+  created_at : TIMESTAMPTZ
+}
+
+' ----------------------------------------------------------
+' ClickHouse
+' ----------------------------------------------------------
+entity "log_events" as log_events <<ClickHouse>> #F3F781 {
+  *event_id : BIGINT
+  --
+  user_id : BIGINT
+  action : TEXT
+  timestamp : TIMESTAMPTZ
+  metadata : TEXT
+}
+
+' ----------------------------------------------------------
+' СВЯЗИ (по описанию)
+' ----------------------------------------------------------
+' users ↔ log_events (1:М)
+users ||--o{ log_events : "user_id"
+
+' users ↔ sessions (1:М)
+users ||--o{ sessions : "user_id"
+
+' users ↔ friends (1:1 по user_id, friend_id)
+users ||--|| friends : "user_id, friend_id"
+
+' users ↔ comments (1:М)
+users ||--o{ comments : "author_id"
+
+' users ↔ posts (1:М)
+users ||--o{ posts : "author_id"
+
+' users ↔ group_members (М:1)
+group_members }o--|| users : "user_id"
+
+' users ↔ groups (1:М)
+users ||--o{ groups : "owner_id"
+
+' users ↔ cache_user_profiles (1:М)
+users ||--o{ cache_user_profiles : "user_id"
+
+' users ↔ cache_feeds (1:М)
+users ||--o{ cache_feeds : "user_id"
+
+' users ↔ messages (1:М)
+users ||--o{ messages : "sender_id"
+
+' users ↔ media (1:М)
+users ||--o{ media : "owner_id"
+
+' posts ↔ comments (1:М)
+posts ||--o{ comments : "post_id"
+
+' groups ↔ posts (1:М)
+groups ||--o{ posts : "group_id"
+
+' group_members ↔ groups (1:М)
+groups ||--o{ group_members : "group_id"
+
+' chats ↔ messages (1:М)
+chats ||--o{ messages : "chat_id"
+
+' storage ↔ media (1:М)
+storage ||--o{ media : "id"
+
+@enduml
