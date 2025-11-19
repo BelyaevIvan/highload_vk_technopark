@@ -321,7 +321,7 @@
 | Таблица             | СУБД                             | Обоснование                                                                                                                    |
 | ------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | users               | **PostgreSQL**                   | Требуется strong consistency, частые операции чтения/редактирования профилей, SQL-поддержка для сложных запросов и индексации. |
-| friends             | **Cassandra / ScyllaDB**         | Высокая скорость записи, causal consistency подходит для заявок в друзья, легко масштабировать по user_id.                     |
+| friends             | **PostgreSQL**        | Требуется strong consistency, частые операции чтения/редактирования профилей, SQL-поддержка для сложных|
 | groups              | **PostgreSQL**                   | Strong consistency для метаданных сообществ, небольшая нагрузка по количеству записей, удобные индексы.                        |
 | group_members       | **Cassandra / ScyllaDB**         | Causal consistency, шардирование по group_id, эффективная работа с большими группами.                                          |
 | posts               | **Cassandra / ScyllaDB**         | Eventual consistency, высокая нагрузка по вставке и чтению, шардирование по post_id.                                           |
@@ -329,11 +329,11 @@
 | messages            | **Cassandra / ScyllaDB**         | Sequential consistency, шардирование по chat_id, высокая частота операций, горизонтальное масштабирование.                     |
 | chats               | **PostgreSQL**                   | Strong consistency на метаданные чатов, низкая нагрузка по количеству записей.                                                 |
 | media               | **Ceph / S3-compatible storage** | Eventual consistency для метаданных, физическое хранение файлов, шардирование по геолокации/owner_id.                          |
-| storage             | **PostgreSQL / MySQL**           | Strong consistency, контроль физического размещения медиа, низкая частота записей.                                             |
-| sessions            | **Redis / Memcached**            | Strong consistency, быстрый доступ к сессиям, TTL для автоматического истечения.                                               |
-| cache_user_profiles | **Redis / Memcached**            | Eventual consistency, высокая частота чтения, низкая задержка.                                                                 |
-| cache_feeds         | **Redis / Memcached / KeyDB**    | Eventual consistency, частые запросы, горизонтальное масштабирование.                                                          |
-| log_events          | **ClickHouse / TimescaleDB**     | Sequential consistency, аналитика и хранение больших объемов событий, шардирование по time_bucket.                             |
+| storage             | **PostgreSQL**           | Strong consistency, контроль физического размещения медиа, низкая частота записей.                                             |
+| sessions            | **Redis**            | Strong consistency, быстрый доступ к сессиям, TTL для автоматического истечения.                                               |
+| cache_user_profiles | **Redis**            | Eventual consistency, высокая частота чтения, низкая задержка.                                                                 |
+| cache_feeds         | **Redis**    | Eventual consistency, частые запросы, горизонтальное масштабирование.                                                          |
+| log_events          | **ClickHouse**     | Sequential consistency, аналитика и хранение больших объемов событий, шардирование по time_bucket.                             |
 
 ---
 
@@ -594,3 +594,6 @@ Failover — это механизм автоматического перекл
 - Kibana: визуализация, создание дашбордов и мониторинг, обнаружение аномалий.
 
 ---
+
+## 10. Схема проекта
+![alt text](scheme.drawio.png)

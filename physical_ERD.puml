@@ -30,6 +30,14 @@ entity "users" as users <<PostgreSQL>> #A9D0F5 {
   avatar_id : BIGINT
 }
 
+entity "friends" as friends <<PostgreSQL>> #A9D0F5 {
+  *user_id : BIGINT
+  *friend_id : BIGINT
+  --
+  status : TEXT
+  created_at : TIMESTAMPTZ
+}
+
 entity "groups" as groups <<PostgreSQL>> #A9D0F5 {
   *id : BIGINT
   --
@@ -59,14 +67,6 @@ entity "storage" as storage <<PostgreSQL>> #A9D0F5 {
 ' ----------------------------------------------------------
 ' Cassandra / ScyllaDB
 ' ----------------------------------------------------------
-entity "friends" as friends <<Cassandra>> #D0A9F5 {
-  *user_id : BIGINT
-  *friend_id : BIGINT
-  --
-  status : TEXT
-  created_at : TIMESTAMPTZ
-}
-
 entity "group_members" as group_members <<Cassandra>> #D0A9F5 {
   *group_id : BIGINT
   *user_id : BIGINT
